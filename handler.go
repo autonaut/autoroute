@@ -1,4 +1,4 @@
-package autonaut
+package autoroute
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 )
 
 var (
-	ErrNoFunction          = errors.New("autonaut: not a function passed to NewHandler")
-	ErrTooManyInputArgs    = errors.New("autonaut: a function can only have up to three input args")
-	ErrTooManyOutputArgs   = errors.New("autonaut: a function can only have up to two output args")
-	ErrBadErrorHandlerArgs = errors.New("autonaut: error handlers must have two input args")
-	ErrDecodeFailure       = errors.New("autonaut: failure decoding input")
+	ErrNoFunction          = errors.New("autoroute: not a function passed to NewHandler")
+	ErrTooManyInputArgs    = errors.New("autoroute: a function can only have up to three input args")
+	ErrTooManyOutputArgs   = errors.New("autoroute: a function can only have up to two output args")
+	ErrBadErrorHandlerArgs = errors.New("autoroute: error handlers must have two input args")
+	ErrDecodeFailure       = errors.New("autoroute: failure decoding input")
 )
 
 type Header map[string]string
@@ -101,7 +101,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !(headerType == h.reflectFn.Type().In(1)) {
-			panic("autonaut: functions with three input args must have the second be an autonaut.Header")
+			panic("autoroute: functions with three input args must have the second be an autoroute.Header")
 		} else {
 			callArgs[1] = reflect.ValueOf(make(Header))
 		}
@@ -153,7 +153,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case 0:
 		// do nothing
 	default:
-		panic("autonaut: can only have up to three input args")
+		panic("autoroute: can only have up to three input args")
 	}
 
 	outputValues := h.reflectFn.Call(callArgs)

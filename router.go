@@ -1,4 +1,4 @@
-package autonaut
+package autoroute
 
 import (
 	"errors"
@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	ErrAlreadyRegistered = errors.New("autonaut: route already registered")
-	ErrInvalidMethod     = errors.New("autonaut: not a valid method")
+	ErrAlreadyRegistered = errors.New("autoroute: route already registered")
+	ErrInvalidMethod     = errors.New("autoroute: not a valid method")
 )
 
-// Router implements an autonaut aware grouping of autonaut.Handler's
+// Router implements an autoroute aware grouping of autoroute.Handler's
 type Router struct {
 	// map[http.Method]map[Path]*Handler
 	routeMap map[string]map[string]*Handler
