@@ -1,6 +1,5 @@
 autoroute [![Build Status](https://travis-ci.org/autonaut/autoroute.svg?branch=master)](https://travis-ci.org/autonaut/autoroute) [![Documentation](https://godoc.org/github.com/autonaut/autoroute?status.svg)](http://godoc.org/github.com/autonaut/autoroute)
-
-------
+======
 
 WIP: There's a bit left to do here
 
