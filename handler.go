@@ -43,15 +43,10 @@ func WithCodec(c Codec) HandlerOption {
 	}
 }
 
-type Codec interface {
-	Mime() string
-	ValidFn(fn reflect.Value) error
-	HandleRequest(w http.ResponseWriter, r *http.Request, eh ErrorHandler, fn reflect.Value, inputArgs, outputArgs int, maxSizeBytes int64)
-}
-
 type Handler struct {
-	reflectFn reflect.Value
-	fnName    string
+	reflectFn     reflect.Value
+	reflectFnType reflect.Type
+	fnName        string
 
 	mimeToCodec map[string]Codec
 
@@ -74,6 +69,7 @@ func NewHandler(x interface{}, opts ...HandlerOption) (*Handler, error) {
 
 	h := &Handler{
 		reflectFn:     reflectFn,
+		reflectFnType: reflectFn.Type(),
 		fnName:        fnName,
 		inputArgCount: inputArgCount,
 		// 65336 bytes
@@ -114,7 +110,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	codec.HandleRequest(w, r, h.errorHandler, h.reflectFn, h.inputArgCount, h.outputArgCount, h.maxSizeBytes)
+	codec.HandleRequest(&CodecRequestArgs{
+		ResponseWriter: w,
+		Request:        r,
+		ErrorHandler:   h.errorHandler,
+		HandlerFn:      h.reflectFn,
+		HandlerType:    h.reflectFnType,
+		InputArgCount:  h.inputArgCount,
+		OutputArgCount: h.outputArgCount,
+		MaxSizeBytes:   h.maxSizeBytes,
+	})
 }
 
 func newReflectType(t reflect.Type) reflect.Value {
