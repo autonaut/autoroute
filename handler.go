@@ -2,10 +2,8 @@ package autoroute
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
+	"mime"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -29,24 +27,38 @@ type HandlerOption func(h *Handler)
 
 func WithErrorHandler(errH ErrorHandler) HandlerOption {
 	return func(h *Handler) {
-		h.errorHandlerFn = reflect.ValueOf(errH)
+		h.errorHandler = errH
 	}
 }
 
-func WithMaxSizeBytes(maxSizeBytes uint64) HandlerOption {
+func WithMaxSizeBytes(maxSizeBytes int64) HandlerOption {
 	return func(h *Handler) {
 		h.maxSizeBytes = maxSizeBytes
 	}
+}
+
+func WithCodec(c Codec) HandlerOption {
+	return func(h *Handler) {
+		h.mimeToCodec[c.Mime()] = c
+	}
+}
+
+type Codec interface {
+	Mime() string
+	ValidFn(fn reflect.Value) error
+	HandleRequest(w http.ResponseWriter, r *http.Request, eh ErrorHandler, fn reflect.Value, inputArgs, outputArgs int, maxSizeBytes int64)
 }
 
 type Handler struct {
 	reflectFn reflect.Value
 	fnName    string
 
+	mimeToCodec map[string]Codec
+
 	inputArgCount, outputArgCount int
 
-	maxSizeBytes   uint64
-	errorHandlerFn reflect.Value
+	maxSizeBytes int64
+	errorHandler ErrorHandler
 }
 
 func NewHandler(x interface{}, opts ...HandlerOption) (*Handler, error) {
@@ -58,14 +70,7 @@ func NewHandler(x interface{}, opts ...HandlerOption) (*Handler, error) {
 	}
 
 	inputArgCount := reflectFn.Type().NumIn()
-	if inputArgCount > 3 {
-		return nil, ErrTooManyInputArgs
-	}
-
 	outputArgCount := reflectFn.Type().NumOut()
-	if outputArgCount > 2 {
-		return nil, ErrTooManyOutputArgs
-	}
 
 	h := &Handler{
 		reflectFn:     reflectFn,
@@ -74,121 +79,42 @@ func NewHandler(x interface{}, opts ...HandlerOption) (*Handler, error) {
 		// 65336 bytes
 		maxSizeBytes:   2 << 15,
 		outputArgCount: outputArgCount,
+		mimeToCodec:    make(map[string]Codec),
+		errorHandler:   DefaultErrorHandler,
 	}
 
 	for _, opt := range opts {
 		opt(h)
 	}
 
+	// prevalidate all loaded codecs
+	for _, codec := range h.mimeToCodec {
+		err := codec.ValidFn(h.reflectFn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return h, nil
 }
 
+const MimeTypeHeader = "Content-Type"
+
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	ctx := reflect.ValueOf(r.Context())
-	callArgs := make([]reflect.Value, h.inputArgCount)
-	switch h.inputArgCount {
-	case 3:
-		if h.reflectFn.Type().In(0).Kind() == reflect.Interface {
-			// if it implements context.Context
-			if contextType.Implements(h.reflectFn.Type().In(0)) {
-				callArgs[0] = ctx
-			} else {
-				panic("got a non context.Context interface type as the first arg")
-			}
-		} else {
-			panic("functions with two or more input args must have the first one be a context.Context")
-		}
-
-		if !(headerType == h.reflectFn.Type().In(1)) {
-			panic("autoroute: functions with three input args must have the second be an autoroute.Header")
-		} else {
-			callArgs[1] = reflect.ValueOf(make(Header))
-		}
-
-		callArg, err := h.decode(h.reflectFn.Type().In(2), r.Body)
-		if err != nil {
-			h.handleErr(w, reflect.ValueOf(err))
-			return
-		}
-
-		callArgs[2] = callArg
-	case 2:
-		if h.reflectFn.Type().In(0).Kind() == reflect.Interface {
-			// if it implements context.Context
-			if contextType.Implements(h.reflectFn.Type().In(0)) {
-				callArgs[0] = ctx
-			} else {
-				panic("got a non context.Context interface type as the first arg")
-			}
-		} else {
-			panic("functions with two or more input args must have the first one be a context.Context")
-		}
-
-		callArg, err := h.decode(h.reflectFn.Type().In(1), r.Body)
-		if err != nil {
-			h.handleErr(w, reflect.ValueOf(err))
-			return
-		}
-
-		callArgs[1] = callArg
-	case 1:
-		// here, our first arg is an interface
-		if h.reflectFn.Type().In(0).Kind() == reflect.Interface {
-			// if it implements context.Context
-			if contextType.Implements(h.reflectFn.Type().In(0)) {
-				callArgs[0] = ctx
-			} else {
-				panic("got a non context.Context interface type as the first arg")
-			}
-		} else {
-			callArg, err := h.decode(h.reflectFn.Type().In(0), r.Body)
-			if err != nil {
-				h.handleErr(w, reflect.ValueOf(err))
-				return
-			}
-
-			callArgs[0] = callArg
-		}
-	case 0:
-		// do nothing
-	default:
-		panic("autoroute: can only have up to three input args")
+	canonicalMime, _, err := mime.ParseMediaType(r.Header.Get(MimeTypeHeader))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		h.errorHandler(w, err)
+		return
 	}
 
-	outputValues := h.reflectFn.Call(callArgs)
-	switch h.outputArgCount {
-	case 2:
-		// if err == nil
-		if outputValues[1].IsNil() {
-			err := json.NewEncoder(w).Encode(outputValues[0].Interface())
-			if err != nil {
-				panic(err)
-			}
-			return
-		}
-
-		if outputValues[1].Kind() == reflect.Interface {
-			if outputValues[1].Type().ConvertibleTo(errorType) {
-				h.handleErr(w, outputValues[1])
-				return
-			}
-		}
-	case 1:
-		if outputValues[0].Kind() == reflect.Interface {
-			if outputValues[0].Type().ConvertibleTo(errorType) {
-				h.handleErr(w, outputValues[0])
-				return
-			}
-		}
-
-		err := json.NewEncoder(w).Encode(outputValues[0].Interface())
-		if err != nil {
-			panic(err)
-		}
-	case 0:
-		w.WriteHeader(http.StatusOK)
+	codec, ok := h.mimeToCodec[canonicalMime]
+	if !ok {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
 	}
+
+	codec.HandleRequest(w, r, h.errorHandler, h.reflectFn, h.inputArgCount, h.outputArgCount, h.maxSizeBytes)
 }
 
 func newReflectType(t reflect.Type) reflect.Value {
@@ -198,54 +124,4 @@ func newReflectType(t reflect.Type) reflect.Value {
 	}
 
 	return reflect.New(t)
-}
-
-func (h *Handler) defaultErrorHandler(w http.ResponseWriter, x error) {
-	if x == ErrDecodeFailure {
-		w.WriteHeader(http.StatusBadRequest)
-	}
-
-	outputErrorString := fmt.Sprintf("%s", x)
-	json.NewEncoder(w).Encode(map[string]interface{}{"error": outputErrorString})
-}
-
-func (h *Handler) handleErr(w http.ResponseWriter, errorValue reflect.Value) {
-	errConv := errorValue.Convert(errorType)
-	if h.errorHandlerFn.IsValid() {
-		h.errorHandlerFn.Call([]reflect.Value{reflect.ValueOf(w), errConv})
-	} else {
-		defaultErrorHandler := reflect.ValueOf(h.defaultErrorHandler)
-		defaultErrorHandler.Call([]reflect.Value{reflect.ValueOf(w), errConv})
-	}
-}
-
-func (h *Handler) decode(inArg reflect.Type, body io.ReadCloser) (reflect.Value, error) {
-	var object reflect.Value
-
-	switch inArg.Kind() {
-	case reflect.Struct:
-		object = newReflectType(inArg)
-	case reflect.Ptr:
-		object = newReflectType(inArg)
-	}
-
-	oi := object.Interface()
-	err := json.NewDecoder(io.LimitReader(body, int64(h.maxSizeBytes))).Decode(&oi)
-	if err != nil {
-		if err == io.EOF {
-			return reflect.Value{}, ErrDecodeFailure
-			// literally do nothing if we got no body
-		} else {
-			return reflect.Value{}, err
-		}
-	}
-
-	switch inArg.Kind() {
-	case reflect.Struct:
-		return reflect.ValueOf(oi).Elem(), nil
-	case reflect.Ptr:
-		return reflect.ValueOf(oi), nil
-	}
-
-	return reflect.Value{}, ErrDecodeFailure
 }
