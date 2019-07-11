@@ -132,13 +132,14 @@ func TestHandlerBasic(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThing)
+	handler, err := NewHandler(ts.DoThing, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -157,13 +158,14 @@ func TestHandlerCtxArg(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingCtx)
+	handler, err := NewHandler(ts.DoThingCtx, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -182,13 +184,14 @@ func TestHandlerCtxValueArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingCtxValueArgs)
+	handler, err := NewHandler(ts.DoThingCtxValueArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -207,13 +210,14 @@ func TestHandlerValueArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingValueArgs)
+	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -232,13 +236,14 @@ func TestHandlerNoInputArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgs)
+	handler, err := NewHandler(ts.DoThingNoInputArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -253,13 +258,14 @@ func TestHandlerNoInputArgsPtrOutput(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsPtrOutput)
+	handler, err := NewHandler(ts.DoThingNoInputArgsPtrOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -274,13 +280,14 @@ func TestHandlerNoInputArgsMapOutput(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsMapOutput)
+	handler, err := NewHandler(ts.DoThingNoInputArgsMapOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -295,13 +302,14 @@ func TestHandlerAllArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingAllArgs)
+	handler, err := NewHandler(ts.DoThingAllArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -320,13 +328,14 @@ func TestHandlerErrorReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingErrorReturn)
+	handler, err := NewHandler(ts.DoThingErrorReturn, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -341,13 +350,14 @@ func TestHandlerTwoOutputErrorReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError)
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -363,7 +373,7 @@ func TestHandlerTwoOutputErrorReturnCustomErrorHandler(t *testing.T) {
 	ts := &TestServer{}
 
 	var innerErr error
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithErrorHandler(func(w http.ResponseWriter, err error) {
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec), WithErrorHandler(func(w http.ResponseWriter, err error) {
 		innerErr = err
 	}))
 	if err != nil {
@@ -372,6 +382,7 @@ func TestHandlerTwoOutputErrorReturnCustomErrorHandler(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -388,13 +399,14 @@ func TestHandlerTwoOutputStructReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutput)
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
 
 	handler.ServeHTTP(w, req)
 
@@ -409,7 +421,7 @@ func TestHandlerArgLengthValidation(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	_, err := NewHandler(ts.DoThingTooManyArgs)
+	_, err := NewHandler(ts.DoThingTooManyArgs, WithCodec(JSONCodec))
 	if err == nil {
 		t.Fatal("did not get error for too many args")
 	}

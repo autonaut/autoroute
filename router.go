@@ -15,6 +15,8 @@ type Router struct {
 	// map[http.Method]map[Path]*Handler
 	routeMap map[string]map[string]*Handler
 
+	defaultHandlerOptions []HandlerOption
+
 	defaultErrorHandler ErrorHandler
 	notFoundHandler     http.Handler
 
@@ -22,7 +24,7 @@ type Router struct {
 	keySigner     *keySigner
 }
 
-func NewRouter() (*Router, error) {
+func NewRouter(handlerOptions ...HandlerOption) (*Router, error) {
 	defaultRouteMap := make(map[string]map[string]*Handler)
 	defaultRouteMap[http.MethodGet] = make(map[string]*Handler)
 	defaultRouteMap[http.MethodPut] = make(map[string]*Handler)
@@ -31,8 +33,9 @@ func NewRouter() (*Router, error) {
 	defaultRouteMap[http.MethodDelete] = make(map[string]*Handler)
 
 	return &Router{
-		routeMap:        defaultRouteMap,
-		notFoundHandler: http.NotFoundHandler(),
+		routeMap:              defaultRouteMap,
+		defaultHandlerOptions: handlerOptions,
+		notFoundHandler:       http.NotFoundHandler(),
 	}, nil
 }
 
@@ -41,6 +44,7 @@ func (ro *Router) Register(method string, path string, x interface{}, extraOptio
 		WithErrorHandler(ro.defaultErrorHandler),
 	}
 
+	defaultOptions = append(defaultOptions, ro.defaultHandlerOptions...)
 	defaultOptions = append(defaultOptions, extraOptions...)
 	h, err := NewHandler(x, defaultOptions...)
 	if err != nil {
