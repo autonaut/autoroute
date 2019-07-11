@@ -10,11 +10,8 @@ import (
 )
 
 var (
-	ErrNoFunction          = errors.New("autoroute: not a function passed to NewHandler")
-	ErrTooManyInputArgs    = errors.New("autoroute: a function can only have up to three input args")
-	ErrTooManyOutputArgs   = errors.New("autoroute: a function can only have up to two output args")
-	ErrBadErrorHandlerArgs = errors.New("autoroute: error handlers must have two input args")
-	ErrDecodeFailure       = errors.New("autoroute: failure decoding input")
+	ErrNoFunction    = errors.New("autoroute: not a function passed to NewHandler")
+	ErrDecodeFailure = errors.New("autoroute: failure decoding input")
 )
 
 type Header map[string]string
@@ -43,6 +40,8 @@ func WithCodec(c Codec) HandlerOption {
 	}
 }
 
+// Handler wraps a function and uses reflection and pluggable codecs to
+// automatically create a fast, safe http.Handler from the function
 type Handler struct {
 	reflectFn     reflect.Value
 	reflectFnType reflect.Type
@@ -56,6 +55,8 @@ type Handler struct {
 	errorHandler ErrorHandler
 }
 
+// NewHandler creates an http.Handler from a function that fits a codec-specified
+// layout.
 func NewHandler(x interface{}, opts ...HandlerOption) (*Handler, error) {
 	reflectFn := reflect.ValueOf(x)
 	fnName := runtime.FuncForPC(reflectFn.Pointer()).Name()

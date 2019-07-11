@@ -7,13 +7,26 @@ import (
 	"reflect"
 )
 
-type JSONCodec struct{}
+// JSONCodec implements autoroute functionality for the mime type application/json
+// and functions that have up to three input args and two output args.
+// a function with three input args must look like func(context.Context, autoroute.Header, anyStructOrPointer)
+// with two it can be func(context.Context, autoroute.Header) or func(context.Context, anyStructOrPointer)
+// with one it can be any of func(context.Context), func(autoroute.Header), or func(anyStructOrPointer)
+// in terms of output values, a function can return `(anyStructOrPointer, error)`, `(anyStructOrPointer)`,
+// (error), or nothing.
+// the JSONCodec will attempt to decode values in two ways
+// 1. use encoding/json on the request body
+// 2. decode the URL parameters of a GET request into the struct
+// and it will always JSON encode the output value.
+var JSONCodec Codec = jsonCodec{}
 
-func (js JSONCodec) Mime() string {
+type jsonCodec struct{}
+
+func (js jsonCodec) Mime() string {
 	return "application/json"
 }
 
-func (js JSONCodec) ValidFn(fn reflect.Value) error {
+func (js jsonCodec) ValidFn(fn reflect.Value) error {
 	inputArgCount := fn.Type().NumIn()
 	if inputArgCount > 3 {
 		return ErrTooManyInputArgs
@@ -27,7 +40,7 @@ func (js JSONCodec) ValidFn(fn reflect.Value) error {
 	return nil
 }
 
-func (js JSONCodec) HandleRequest(cra *CodecRequestArgs) {
+func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 	ctx := reflect.ValueOf(cra.Request.Context())
 	callArgs := make([]reflect.Value, cra.InputArgCount)
 	switch cra.InputArgCount {
@@ -135,7 +148,7 @@ func (js JSONCodec) HandleRequest(cra *CodecRequestArgs) {
 	}
 }
 
-func (js JSONCodec) decode(inArg reflect.Type, body io.ReadCloser, maxSizeBytes int64) (reflect.Value, error) {
+func (js jsonCodec) decode(inArg reflect.Type, body io.ReadCloser, maxSizeBytes int64) (reflect.Value, error) {
 	var object reflect.Value
 
 	switch inArg.Kind() {

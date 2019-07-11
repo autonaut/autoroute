@@ -2,9 +2,14 @@ package autoroute
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
+)
+
+var (
+	ErrBadErrorHandlerArgs = errors.New("autoroute: error handlers must have two input args")
 )
 
 // An ErrorHandler is responsible for writing an error back to the calling

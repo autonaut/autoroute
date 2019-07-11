@@ -1,8 +1,14 @@
 package autoroute
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
+)
+
+var (
+	ErrTooManyInputArgs  = errors.New("autoroute: a function can only have up to three input args")
+	ErrTooManyOutputArgs = errors.New("autoroute: a function can only have up to two output args")
 )
 
 // A Codec implements pluggable, mime-type based serialization and deserialization

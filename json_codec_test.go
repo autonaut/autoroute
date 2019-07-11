@@ -132,7 +132,7 @@ func TestHandlerBasic(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThing, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThing, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -158,7 +158,7 @@ func TestHandlerCtxArg(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingCtx, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingCtx, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestHandlerCtxValueArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingCtxValueArgs, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingCtxValueArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -210,7 +210,7 @@ func TestHandlerValueArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +236,7 @@ func TestHandlerNoInputArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgs, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingNoInputArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -258,7 +258,7 @@ func TestHandlerNoInputArgsPtrOutput(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsPtrOutput, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingNoInputArgsPtrOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,7 +280,7 @@ func TestHandlerNoInputArgsMapOutput(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsMapOutput, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingNoInputArgsMapOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -302,7 +302,7 @@ func TestHandlerAllArgs(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingAllArgs, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingAllArgs, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -328,7 +328,7 @@ func TestHandlerErrorReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingErrorReturn, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingErrorReturn, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,7 +350,7 @@ func TestHandlerTwoOutputErrorReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,7 +373,7 @@ func TestHandlerTwoOutputErrorReturnCustomErrorHandler(t *testing.T) {
 	ts := &TestServer{}
 
 	var innerErr error
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec{}), WithErrorHandler(func(w http.ResponseWriter, err error) {
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutputError, WithCodec(JSONCodec), WithErrorHandler(func(w http.ResponseWriter, err error) {
 		innerErr = err
 	}))
 	if err != nil {
@@ -399,7 +399,7 @@ func TestHandlerTwoOutputStructReturn(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutput, WithCodec(JSONCodec{}))
+	handler, err := NewHandler(ts.DoThingNoInputArgsTwoOutput, WithCodec(JSONCodec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,7 +421,7 @@ func TestHandlerArgLengthValidation(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}
 
-	_, err := NewHandler(ts.DoThingTooManyArgs, WithCodec(JSONCodec{}))
+	_, err := NewHandler(ts.DoThingTooManyArgs, WithCodec(JSONCodec))
 	if err == nil {
 		t.Fatal("did not get error for too many args")
 	}
