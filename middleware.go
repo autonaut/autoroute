@@ -13,7 +13,6 @@ import (
 type Middleware interface {
 	// Before can modify an incoming request in the middleware chain
 	Before(r *http.Request, h *Handler) error
-	After(r *http.Request, w http.ResponseWriter) error
 }
 
 type MiddlewareError struct {
@@ -60,22 +59,8 @@ func (shm *SignedHeadersMiddleware) Before(r *http.Request, h *Handler) error {
 	return nil
 }
 
-func (shm *SignedHeadersMiddleware) After(r *http.Request, w http.ResponseWriter) error {
-	for _, h := range shm.headers {
-		hVal := w.Header().Get(h)
-		if hVal == "" {
-			continue
-		}
-
-		signed, err := shm.ks.Sign(hVal)
-		if err != nil {
-			return err
-		}
-
-		r.Header.Set(h, signed)
-	}
-
-	return nil
+func (shm *SignedHeadersMiddleware) Sign(value string) (string, error) {
+	return shm.ks.Sign((value))
 }
 
 type BasicAuthMiddleware struct {
@@ -105,9 +90,5 @@ func (bam *BasicAuthMiddleware) Before(r *http.Request, h *Handler) error {
 		}
 	}
 
-	return nil
-}
-
-func (bam *BasicAuthMiddleware) After(r *http.Request, w http.ResponseWriter) error {
 	return nil
 }

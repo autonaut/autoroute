@@ -32,6 +32,7 @@ func NewRouter(handlerOptions ...HandlerOption) (*Router, error) {
 	return &Router{
 		routeMap:              defaultRouteMap,
 		defaultHandlerOptions: handlerOptions,
+		defaultErrorHandler:   DefaultErrorHandler,
 		notFoundHandler:       http.NotFoundHandler(),
 	}, nil
 }

@@ -50,9 +50,17 @@ func WithMiddleware(m Middleware) HandlerOption {
 	}
 }
 
+func WithName(n string) HandlerOption {
+	return func(h *Handler) {
+		h.name = n
+	}
+}
+
 // Handler wraps a function and uses reflection and pluggable codecs to
 // automatically create a fast, safe http.Handler from the function
 type Handler struct {
+	name string
+
 	reflectFn     reflect.Value
 	reflectFnType reflect.Type
 	fnName        string

@@ -1,12 +1,11 @@
 autoroute [![Build Status](https://travis-ci.org/autonaut/autoroute.svg?branch=master)](https://travis-ci.org/autonaut/autoroute) [![Documentation](https://godoc.org/github.com/autonaut/autoroute?status.svg)](http://godoc.org/github.com/autonaut/autoroute)
 ======
 
-WIP: There's a bit left to do here
-
-- [ ] properly parse http Headers into the `autoroute.Header` arg
 - [ ] document and test the `autoroute.Router`
-
-^ If you don't mind those two being broken, here's autoroute:
+- [ ] add examples for common situations
+	- [ ] authentication
+	- [ ] metricization
+	- [ ] generated clients
 
 build wicked fast, automatically documented APIs with Go.
 
@@ -83,6 +82,13 @@ ian@zuus ~ % curl -w "%{http_code}" -XPOST 'http://localhost:8080' -H 'Content-T
 
 limiting input size (this is harder to demo, but you can control it via `autoroute.WithMaxSizeBytes(your-max-byte-size-int64)` when you create a handler)
 
+## Middleware
+
+Autoroute supports running any middleware you can imagine to modify requests along the way. Common use cases for this is to easily apply authentication and authorization rules to many different routes without writing lots of duplicate code.
+
+Autoroute currently ships with two basic middlewares, `autoroute.BasicAuthMiddleware` and `autoroute.SignedHeaderMiddleware`. The former of which restricts access to only those with a preset username and password via http basic auth, and the latter validates a whitelist of incoming headers using an internal HMAC (i.e. requires that a `api-key` header is signed properly before even letting it get to your code). 
+
+Look in the `examples/middleware` folder for a non-trivial example of this.
 
 ## Codecs and Roadmap
 
