@@ -19,9 +19,6 @@ type Router struct {
 
 	defaultErrorHandler ErrorHandler
 	notFoundHandler     http.Handler
-
-	decodeHeaders []string
-	keySigner     *keySigner
 }
 
 func NewRouter(handlerOptions ...HandlerOption) (*Router, error) {

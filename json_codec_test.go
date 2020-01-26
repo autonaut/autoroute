@@ -128,6 +128,19 @@ func (t *TestServer) DoThingInvalidTwoArgs(ein int, ti *TestInput) *TestOutput {
 	}
 }
 
+func (t *TestServer) DoThingSignedMiddleware(ctx context.Context, hdr Header) *TestOutput {
+	t.requests += 1
+
+	apiKey := hdr["x-api-key"]
+	if apiKey != "is-this-signed" {
+		panic("whoa")
+	}
+
+	return &TestOutput{
+		Output: "hi",
+	}
+}
+
 func TestHandlerBasic(t *testing.T) {
 	t.Parallel()
 	ts := &TestServer{}

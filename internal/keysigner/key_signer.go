@@ -1,4 +1,4 @@
-package autoroute
+package keysigner
 
 import (
 	"crypto/hmac"
@@ -9,20 +9,20 @@ import (
 	"strings"
 )
 
-// A keySigner is used to verify the integrity of SessionKeys at the system borders
-type keySigner struct {
+// A KeySigner is used to verify the integrity of SessionKeys at the system borders
+type KeySigner struct {
 	key []byte
 }
 
-// newKeySigner creates a new keySigner with the given key
-func newKeySigner(key string) *keySigner {
-	return &keySigner{
+// NewKeySigner creates a new KeySigner with the given key
+func NewKeySigner(key string) *KeySigner {
+	return &KeySigner{
 		key: []byte(key),
 	}
 }
 
 // Sign appends an HMAC to a value
-func (ks *keySigner) Sign(val string) (string, error) {
+func (ks *KeySigner) Sign(val string) (string, error) {
 	h := hmac.New(sha256.New, ks.key)
 	_, err := h.Write([]byte(val))
 	if err != nil {
@@ -33,7 +33,7 @@ func (ks *keySigner) Sign(val string) (string, error) {
 }
 
 // Verify checks a value signed with Sign
-func (ks *keySigner) Verify(pubVal string) (string, error) {
+func (ks *KeySigner) Verify(pubVal string) (string, error) {
 	h := hmac.New(sha256.New, ks.key)
 
 	spl := strings.Split(pubVal, ".")

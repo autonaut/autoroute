@@ -26,6 +26,8 @@ type CodecRequestArgs struct {
 	Request        *http.Request
 	ErrorHandler   ErrorHandler
 
+	Header Header
+
 	// Our nice bit of reflection stuff to work with
 	HandlerFn                     reflect.Value
 	HandlerType                   reflect.Type

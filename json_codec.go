@@ -59,7 +59,7 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 		if !(headerType == cra.HandlerType.In(1)) {
 			panic("autoroute: functions with three input args must have the second be an autoroute.Header")
 		} else {
-			callArgs[1] = reflect.ValueOf(make(Header))
+			callArgs[1] = reflect.ValueOf(cra.Header)
 		}
 
 		callArg, err := js.decode(cra.HandlerType.In(2), cra.Request.Body, cra.MaxSizeBytes)
@@ -81,24 +81,35 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 			panic("functions with two or more input args must have the first one be a context.Context")
 		}
 
-		callArg, err := js.decode(cra.HandlerType.In(1), cra.Request.Body, cra.MaxSizeBytes)
+		handlerInArgType := cra.HandlerType.In(1)
+
+		var callArgOne reflect.Value
+		var err error
+		if headerType == handlerInArgType {
+			callArgOne = reflect.ValueOf(cra.Header)
+		} else {
+			callArgOne, err = js.decode(handlerInArgType, cra.Request.Body, cra.MaxSizeBytes)
+		}
 		if err != nil {
 			cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(err))
 			return
 		}
 
-		callArgs[1] = callArg
+		callArgs[1] = callArgOne
 	case 1:
+		inArg := cra.HandlerType.In(0)
 		// here, our first arg is an interface
-		if cra.HandlerType.In(0).Kind() == reflect.Interface {
+		if inArg.Kind() == reflect.Interface {
 			// if it implements context.Context
-			if contextType.Implements(cra.HandlerType.In(0)) {
+			if contextType.Implements(inArg) {
 				callArgs[0] = ctx
 			} else {
 				panic("got a non context.Context interface type as the first arg")
 			}
+		} else if headerType == inArg {
+			callArgs[0] = reflect.ValueOf(cra.Header)
 		} else {
-			callArg, err := js.decode(cra.HandlerType.In(0), cra.Request.Body, cra.MaxSizeBytes)
+			callArg, err := js.decode(inArg, cra.Request.Body, cra.MaxSizeBytes)
 			if err != nil {
 				cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(err))
 				return
