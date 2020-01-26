@@ -131,9 +131,9 @@ func (t *TestServer) DoThingInvalidTwoArgs(ein int, ti *TestInput) *TestOutput {
 func (t *TestServer) DoThingSignedMiddleware(ctx context.Context, hdr Header) *TestOutput {
 	t.requests += 1
 
-	apiKey := hdr["x-api-key"]
+	apiKey := hdr.Get("x-api-key")
 	if apiKey != "is-this-signed" {
-		panic("whoa")
+		panic("x-api-key is not present or invalid")
 	}
 
 	return &TestOutput{

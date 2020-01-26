@@ -1,6 +1,7 @@
 package autoroute
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/autonaut/autoroute/internal/keysigner"
@@ -74,5 +75,39 @@ func (shm *SignedHeadersMiddleware) After(r *http.Request, w http.ResponseWriter
 		r.Header.Set(h, signed)
 	}
 
+	return nil
+}
+
+type BasicAuthMiddleware struct {
+	username, password string
+}
+
+func NewBasicAuthMiddleware(user, pwd string) *BasicAuthMiddleware {
+	return &BasicAuthMiddleware{
+		username: user,
+		password: pwd,
+	}
+}
+
+func (bam *BasicAuthMiddleware) Before(r *http.Request, h *Handler) error {
+	uname, pwd, ok := r.BasicAuth()
+	if !ok {
+		return MiddlewareError{
+			StatusCode: http.StatusForbidden,
+			Err:        errors.New("basic auth required"),
+		}
+	}
+
+	if bam.username != uname || bam.password != pwd {
+		return MiddlewareError{
+			StatusCode: http.StatusForbidden,
+			Err:        errors.New("invalid basic auth"),
+		}
+	}
+
+	return nil
+}
+
+func (bam *BasicAuthMiddleware) After(r *http.Request, w http.ResponseWriter) error {
 	return nil
 }

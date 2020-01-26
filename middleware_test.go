@@ -18,7 +18,7 @@ func TestSignedHeaderMiddleware(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec), WithMiddleware((shm)))
+	handler, err := NewHandler(ts.DoThingSignedMiddleware, WithCodec(JSONCodec), WithMiddleware((shm)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestSignedHeaderMiddlewareRejections(t *testing.T) {
 
 	shm := NewSignedHeadersMiddleware([]string{"x-api-key"}, "test-key")
 
-	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec), WithMiddleware((shm)))
+	handler, err := NewHandler(ts.DoThingSignedMiddleware, WithCodec(JSONCodec), WithMiddleware((shm)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -57,5 +57,53 @@ func TestSignedHeaderMiddlewareRejections(t *testing.T) {
 
 	if w.Result().StatusCode != http.StatusForbidden {
 		t.Error("did not return status verboten")
+	}
+}
+
+func TestBasicAuthMiddleware(t *testing.T) {
+	t.Parallel()
+	ts := &TestServer{}
+
+	bam := NewBasicAuthMiddleware("user", "user")
+
+	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec), WithMiddleware((bam)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+
+	req.SetBasicAuth("user", "user")
+	req.Header.Set("Content-Type", "application/json")
+
+	handler.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Error("request failed when it should have passed")
+	}
+}
+
+func TestBasicAuthMiddlewareInvalid(t *testing.T) {
+	t.Parallel()
+	ts := &TestServer{}
+
+	bam := NewBasicAuthMiddleware("user", "user")
+
+	handler, err := NewHandler(ts.DoThingValueArgs, WithCodec(JSONCodec), WithMiddleware((bam)))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(`{"input": "yo"}`))
+
+	req.SetBasicAuth("user", "incorrect-pwd")
+	req.Header.Set("Content-Type", "application/json")
+
+	handler.ServeHTTP(w, req)
+
+	if w.Result().StatusCode != http.StatusForbidden {
+		t.Error("request failed when it should have passed")
 	}
 }

@@ -16,11 +16,8 @@ var (
 
 type Header map[string]string
 
-var headerValueKey = struct{}{}
-
-func GetHeaders(ctx context.Context) Header {
-	v := ctx.Value(headerValueKey)
-	return v.(Header)
+func (h Header) Get(v string) string {
+	return h[http.CanonicalHeaderKey(v)]
 }
 
 var contextType = reflect.TypeOf((*context.Context)(nil)).Elem()
@@ -144,7 +141,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var header = make(Header)
 	for k := range r.Header {
 		hVal := r.Header.Get(k)
-		header[k] = hVal
+		header[http.CanonicalHeaderKey(k)] = hVal
 	}
 
 	codec.HandleRequest(&CodecRequestArgs{
