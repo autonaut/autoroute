@@ -59,6 +59,10 @@ func (shm *SignedHeadersMiddleware) Before(r *http.Request, h *Handler) error {
 	return nil
 }
 
+func (shm *SignedHeadersMiddleware) Verify(value string) (string, error) {
+	return shm.ks.Verify((value))
+}
+
 func (shm *SignedHeadersMiddleware) Sign(value string) (string, error) {
 	return shm.ks.Sign((value))
 }
