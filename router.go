@@ -18,7 +18,7 @@ type Router struct {
 	defaultHandlerOptions []HandlerOption
 
 	defaultErrorHandler ErrorHandler
-	notFoundHandler     http.Handler
+	NotFoundHandler     http.Handler
 }
 
 func NewRouter(handlerOptions ...HandlerOption) (*Router, error) {
@@ -33,7 +33,7 @@ func NewRouter(handlerOptions ...HandlerOption) (*Router, error) {
 		routeMap:              defaultRouteMap,
 		defaultHandlerOptions: handlerOptions,
 		defaultErrorHandler:   DefaultErrorHandler,
-		notFoundHandler:       http.NotFoundHandler(),
+		NotFoundHandler:       http.NotFoundHandler(),
 	}, nil
 }
 
@@ -77,7 +77,7 @@ func (ro *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	routesForMethod := ro.routeMap[r.Method]
 	handler, ok := routesForMethod[r.URL.Path]
 	if !ok {
-		ro.notFoundHandler.ServeHTTP(w, r)
+		ro.NotFoundHandler.ServeHTTP(w, r)
 		return
 	}
 
