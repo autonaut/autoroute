@@ -1,6 +1,7 @@
 package autoroute
 
 import (
+	"bytes"
 	"errors"
 	"net/http"
 )
@@ -78,8 +79,26 @@ func (ro *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler, ok := routesForMethod[r.URL.Path]
 	if !ok {
 		ro.NotFoundHandler.ServeHTTP(w, r)
+
+		if r.Body == http.NoBody {
+			// do nothing
+		} else {
+			// chew up the rest of the body
+			var buf bytes.Buffer
+			buf.ReadFrom(r.Body)
+			r.Body.Close()
+		}
 		return
 	}
 
 	handler.ServeHTTP(w, r)
+
+	if r.Body == http.NoBody {
+		// do nothing
+	} else {
+		// chew up the rest of the body
+		var buf bytes.Buffer
+		buf.ReadFrom(r.Body)
+		r.Body.Close()
+	}
 }
