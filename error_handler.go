@@ -30,6 +30,11 @@ func DefaultErrorHandler(w http.ResponseWriter, x error) {
 		w.WriteHeader(http.StatusBadRequest)
 	}
 
+	if x == nil {
+		json.NewEncoder(w).Encode(map[string]interface{}{"error": nil})
+		return
+	}
+
 	outputErrorString := fmt.Sprintf("%s", x)
 	json.NewEncoder(w).Encode(map[string]interface{}{"error": outputErrorString})
 }

@@ -31,6 +31,11 @@ func (t *TestServer) DoThing(ti *TestInput) *TestOutput {
 	}
 }
 
+func (t *TestServer) DoThingNilError() error {
+	t.requests += 1
+	return nil
+}
+
 func (t *TestServer) DoThingCtx(ctx context.Context, ti *TestInput) *TestOutput {
 	t.requests += 1
 	t.input = ti.Input
@@ -353,6 +358,28 @@ func TestHandlerErrorReturn(t *testing.T) {
 	handler.ServeHTTP(w, req)
 
 	diffJSON(t, `{"error":"sup"}`+"\n", w.Body.String())
+
+	if ts.requests != 1 {
+		t.Fatal("did not actually call function")
+	}
+}
+
+func TestHandlerNilErrorReturn(t *testing.T) {
+	t.Parallel()
+	ts := &TestServer{}
+
+	handler, err := NewHandler(ts.DoThingNilError, WithCodec(JSONCodec))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	handler.ServeHTTP(w, req)
+
+	diffJSON(t, `{"error":null}`+"\n", w.Body.String())
 
 	if ts.requests != 1 {
 		t.Fatal("did not actually call function")
