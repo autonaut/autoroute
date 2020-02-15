@@ -170,7 +170,9 @@ func (js jsonCodec) decode(inArg reflect.Type, body io.ReadCloser, maxSizeBytes 
 	}
 
 	oi := object.Interface()
-	err := json.NewDecoder(io.LimitReader(body, maxSizeBytes)).Decode(&oi)
+	dec := json.NewDecoder(io.LimitReader(body, maxSizeBytes))
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&oi)
 	if err != nil {
 		if err == io.EOF {
 			return reflect.Value{}, ErrDecodeFailure
