@@ -1,8 +1,11 @@
 package autoroute
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 )
@@ -62,6 +65,11 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 			callArgs[1] = reflect.ValueOf(cra.Header)
 		}
 
+		if cra.Request.Body == nil {
+			cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(errors.New("autoroute: request requires a body")))
+			return
+		}
+
 		callArg, err := js.decode(cra.HandlerType.In(2), cra.Request.Body, cra.MaxSizeBytes)
 		if err != nil {
 			cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(err))
@@ -88,6 +96,11 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 		if headerType == handlerInArgType {
 			callArgOne = reflect.ValueOf(cra.Header)
 		} else {
+			if cra.Request.Body == nil {
+				cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(errors.New("autoroute: request requires a body")))
+				return
+			}
+
 			callArgOne, err = js.decode(handlerInArgType, cra.Request.Body, cra.MaxSizeBytes)
 		}
 		if err != nil {
@@ -109,6 +122,11 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 		} else if headerType == inArg {
 			callArgs[0] = reflect.ValueOf(cra.Header)
 		} else {
+			if cra.Request.Body == nil {
+				cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(errors.New("autoroute: request requires a body")))
+				return
+			}
+
 			callArg, err := js.decode(inArg, cra.Request.Body, cra.MaxSizeBytes)
 			if err != nil {
 				cra.ErrorHandler.Handle(cra.ResponseWriter, reflect.ValueOf(err))
@@ -160,6 +178,10 @@ func (js jsonCodec) HandleRequest(cra *CodecRequestArgs) {
 }
 
 func (js jsonCodec) decode(inArg reflect.Type, body io.ReadCloser, maxSizeBytes int64) (reflect.Value, error) {
+	if body == nil {
+		body = ioutil.NopCloser(bytes.NewReader([]byte("{}")))
+	}
+
 	var object reflect.Value
 
 	switch inArg.Kind() {
