@@ -80,7 +80,7 @@ func (ro *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		ro.NotFoundHandler.ServeHTTP(w, r)
 
-		if r.Body == http.NoBody {
+		if r.Body == nil || r.Body == http.NoBody {
 			// do nothing
 		} else {
 			// chew up the rest of the body
@@ -93,12 +93,9 @@ func (ro *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	handler.ServeHTTP(w, r)
 
-	if r.Body == http.NoBody {
+	if r.Body == nil || r.Body == http.NoBody {
 		// do nothing
 	} else {
-		if r.Body == nil {
-			return
-		}
 		// chew up the rest of the body
 		var buf bytes.Buffer
 		buf.ReadFrom(r.Body)
